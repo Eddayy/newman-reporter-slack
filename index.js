@@ -36,59 +36,72 @@ class SlackReporter {
                 }
             }
             let headers = ['stats', 'total', 'failed'];
-            let fail_headers = ['#','failure','detail'];
             let arr = ['iterations', 'requests', 'testScripts', 'prerequestScripts', 'assertions'];
-            fail_data.push(fail_headers);
             data.push(headers);
             arr.forEach(function (element) {
                 data.push([element, run.stats[element].total, run.stats[element].failed]);
             });
 
+
+            let text = `${title}\n`;
+            let isFail = false;
+            text += `*Success requests*`;
+            summary.run.executions.forEach(item =>{
+                let testcount = 0;
+                let failcount = 0;
+                if(item.request.url !== null || item.request.url !== undefined){
+                    if(item.assertions != null){
+                        item.assertions.forEach(assertion=>{
+                                textcount ++;
+                                //let assert = assertion.error == null?':heavy_check_mark:':':x:'
+                                //text += `\t${assert} ${assertion.assertion}\n`
+                                if(assertion.error != null){
+                                    failcount ++;
+                                    isFail = true;
+                                    fail_data.push([assertion.error.index,assertion.error.name,assertion.error.message])
+                            }
+                        })
+                    }
+                    if(isFail === false){
+                        text += `:heavy_check_mark: `
+                         //text += `:point_right: ${item.item.name}\n`
+                        text += `${item.request.method} ${item.request.url.protocol}://`
+                        text += `${item.request.url.host.join('.')}/`
+                        text += `${item.request.url.path.join('/')} `
+                        text += `[${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
+                        text += `(${testcount}/${testcount})`
+                        text += `\n`
+                    }
+                   
+                   
+                }
+            })
             let duration = prettyms(run.timings.completed - run.timings.started);
             data.push(['------------------', '-----', '-------']);
             data.push(['total run duration', duration]);
             let table = markdowntable(data);
-            let text = `${title}\n`;
-            let isFail = false;
+            text += `${backticks}${table}${backticks}`;
+            if(isFail){
+                let fail_headers = ['#','failure','detail'];
+                fail_data.push(fail_headers);
 
-            summary.run.executions.forEach(item =>{
-                
-                text += `:point_right: ${item.item.name}\n`
-                text += `\t${item.request.method} ${item.request.url.protocol}://`
-                text += `${item.request.url.host.join('.')}/`
-                text += `${item.request.url.path.join('/')} `
-                text += `[${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
-                text += `\n`
-                if(item.assertions != null){
-                        item.assertions.forEach(assertion=>{
-                                let assert = assertion.error == null?':heavy_check_mark:':':x:'
-                                text += `\t${assert} ${assertion.assertion}\n`
-                                if(assertion.error != null){
-                                    isFail = true;
-                                    fail_data.push([assertion.error.index,assertion.error.name,assertion.error.message])
-                            }
-                    })
-            }
-        })
-        text += `${backticks}${table}${backticks}`;
-        if(isFail){
                 let fail_table = markdowntable(fail_data);
                 text += `\n${backticks}${fail_table}${backticks}`;
-        }
-        let msg = {
-            channel: channel,
-            text: text
-        }
-
-        const webhook = new IncomingWebhook(webhookUrl);
-        webhook.send(msg, (error, response) => {
-            if (error) {
-                return console.error(error.message);
             }
-            console.log(response);
+            let msg = {
+                channel: channel,
+                text: text
+            }
+
+            const webhook = new IncomingWebhook(webhookUrl);
+            webhook.send(msg, (error, response) => {
+                if (error) {
+                    return console.error(error.message);
+                }
+                console.log(response);
+            });
         });
-    });
-}
+    }
 }
 
 module.exports = SlackReporter;
