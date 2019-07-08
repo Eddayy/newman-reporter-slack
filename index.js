@@ -28,7 +28,7 @@ class SlackReporter {
             }
             let run = summary.run;
             let data = []
-            let fail_data = []
+           // let fail_data = []
             if (!title) {
                 title = summary.collection.name;
                 if (summary.environment.name) {
@@ -41,8 +41,8 @@ class SlackReporter {
             arr.forEach(function (element) {
                 data.push([element, run.stats[element].total, run.stats[element].failed]);
             });
-            let fail_headers = ['#','failure','detail'];
-            fail_data.push(fail_headers);
+           // let fail_headers = ['#','failure','detail'];
+            //fail_data.push(fail_headers);
 
             let text = `${title}\n`;
             let isFail = false;
@@ -64,13 +64,14 @@ class SlackReporter {
                                     failcount ++;
                                     totalfail ++;
                                     isFail = true;
-                                    fail_data.push([totalfail,assertion.error.name,assertion.error.message])
+                                   // fail_data.push([totalfail,assertion.error.name,assertion.assertion])
+                                    //fail_data.push(['','',`${url.substring(0,60)}...`])
+                                    //fail_data.push(['','',assertion.error.message])
                             }
                         })
                     }
                     if(failcount === 0){
                         text += `:heavy_check_mark: `
-                         //text += `:point_right: ${item.item.name}\n`
                         text += url
                         text += ` [${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
                         text += ` (${testcount}/${testcount})`
@@ -82,16 +83,14 @@ class SlackReporter {
                             failtext += `*Error requests*\n`;
                         }
                         failtext += `:x: `
-                        //text += `:point_right: ${item.item.name}\n`
                         failtext += url
                         failtext += ` [${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
-                        failtext += ` (${testcount-failcount}/${testcount})`
+                        failtext += ` (${testcount-failcount}/${testcount}) \n`
                         item.assertions.forEach(assertion=>{
                             if(assertion.error != null){
-                                failtext += ` #${totalfail}`
+                                failtext += `\`${assertion.assertion} - ${assertion.error.message}\`\n`
                             }
                         })
-                        failtext += `\n`
                     }
                    
                    
@@ -103,10 +102,10 @@ class SlackReporter {
             data.push(['total run duration', duration]);
             let table = markdowntable(data);
             text += `${backticks}${table}${backticks}`;
-            if(run.stats['assertions'].failed > 0){
-                let fail_table = markdowntable(fail_data);
-                text += `\n${backticks}${fail_table}${backticks}`;
-            }
+            // if(run.stats['assertions'].failed > 0){
+            //     let fail_table = markdowntable(fail_data);
+            //     text += `\n${backticks}${fail_table}${backticks}`;
+            // }
             let msg = {
                 channel: channel,
                 text: text
