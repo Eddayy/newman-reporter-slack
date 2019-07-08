@@ -3,6 +3,7 @@ let {
 } = require('@slack/client');
 let markdowntable = require('markdown-table');
 let prettyms = require('pretty-ms');
+let prettyBytes = require('pretty-bytes');
 
 
 class SlackReporter {
@@ -21,22 +22,23 @@ class SlackReporter {
             console.log('please provide slack channel');
             return;
         }
-
         emitter.on('done', (err, summary) => {
             if (err) {
                 return;
             }
             let run = summary.run;
             let data = []
+            let fail_data = []
             if (!title) {
                 title = summary.collection.name;
                 if (summary.environment.name) {
                     title += ' - ' + summary.environment.name
                 }
             }
-            let headers = [header, 'total', 'failed'];
+            let headers = ['stats', 'total', 'failed'];
+            let fail_headers = ['#','failure','detail'];
             let arr = ['iterations', 'requests', 'testScripts', 'prerequestScripts', 'assertions'];
-
+            fail_data.push(fail_headers);
             data.push(headers);
             arr.forEach(function (element) {
                 data.push([element, run.stats[element].total, run.stats[element].failed]);
@@ -45,23 +47,48 @@ class SlackReporter {
             let duration = prettyms(run.timings.completed - run.timings.started);
             data.push(['------------------', '-----', '-------']);
             data.push(['total run duration', duration]);
-
             let table = markdowntable(data);
-            let text = `${title}\n${backticks}${table}${backticks}`
-            let msg = {
-                channel: channel,
-                text: text
-            }
+            let text = `${title}\n`;
+            let isFail = false;
 
-            const webhook = new IncomingWebhook(webhookUrl);
-            webhook.send(msg, (error, response) => {
-                if (error) {
-                    return console.error(error.message);
-                }
-                console.log(response);
-            });
+            summary.run.executions.forEach(item =>{
+                
+                text += `:point_right: ${item.item.name}\n`
+                text += `\t${item.request.method} ${item.request.url.protocol}://`
+                text += `${item.request.url.host.join('.')}/`
+                text += `${item.request.url.path.join('/')} `
+                text += `[${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
+                text += `\n`
+                if(item.assertions != null){
+                        item.assertions.forEach(assertion=>{
+                                let assert = assertion.error == null?':heavy_check_mark:':':x:'
+                                text += `\t${assert} ${assertion.assertion}\n`
+                                if(assertion.error != null){
+                                    isFail = true;
+                                    fail_data.push([assertion.error.index,assertion.error.name,assertion.error.message])
+                            }
+                    })
+            }
+        })
+        text += `${backticks}${table}${backticks}`;
+        if(isFail){
+                let fail_table = markdowntable(fail_data);
+                text += `\n${backticks}${fail_table}${backticks}`;
+        }
+        let msg = {
+            channel: channel,
+            text: text
+        }
+
+        const webhook = new IncomingWebhook(webhookUrl);
+        webhook.send(msg, (error, response) => {
+            if (error) {
+                return console.error(error.message);
+            }
+            console.log(response);
         });
-    }
+    });
+}
 }
 
 module.exports = SlackReporter;
