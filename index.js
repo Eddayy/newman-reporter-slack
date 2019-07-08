@@ -65,11 +65,11 @@ class SlackReporter {
                             }
                         })
                     }
-                    if(failcount > 0){
-                        text += `:white_check_mark: `
+                    if(failcount === 0){
+                        text += `:check_mark: `
                          //text += `:point_right: ${item.item.name}\n`
                         text += url
-                        text += `[${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
+                        text += ` [${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
                         text += ` (${testcount}/${testcount})`
                         text += `\n`
                     }
@@ -81,7 +81,7 @@ class SlackReporter {
                         text += `:x: `
                         //text += `:point_right: ${item.item.name}\n`
                         text += url
-                        text += `[${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
+                        text += ` [${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
                         text += ` (${failcount}/${testcount})`
                         text += `\n`
                     }
