@@ -47,7 +47,7 @@ class SlackReporter {
             let isFail = false;
             text += `*Success requests*`;
             summary.run.executions.forEach(item =>{
-                let testcount = 0;
+                let textcount = 0;
                 let failcount = 0;
                 if(item.request.url !== null || item.request.url !== undefined){
                     if(item.assertions != null){
