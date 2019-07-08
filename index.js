@@ -45,7 +45,8 @@ class SlackReporter {
 
             let text = `${title}\n`;
             let isFail = false;
-            text += `*Success requests*`;
+            text += `*Success requests*\n`;
+            let failtitle = true;
             summary.run.executions.forEach(item =>{
                 let testcount = 0;
                 let failcount = 0;
@@ -63,17 +64,28 @@ class SlackReporter {
                         })
                     }
                     if(isFail === false){
-                        text += `:heavy_check_mark: `
+                        text += `:white_check_mark: `
                          //text += `:point_right: ${item.item.name}\n`
                         text += `${item.request.method} ${item.request.url.protocol}://`
                         text += `${item.request.url.host.join('.')}/`
                         text += `${item.request.url.path.join('/')} `
                         text += `[${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
-                        text += `(${testcount}/${testcount})`
+                        text += ` (${testcount}/${testcount})`
                         text += `\n`
                     }
                     else{
-                        
+                        if(failtitle){
+                            failtitle = false;
+                            text += `*Error requests*\n`;
+                        }
+                        text += `:x: `
+                        //text += `:point_right: ${item.item.name}\n`
+                        text += `${item.request.method} ${item.request.url.protocol}://`
+                        text += `${item.request.url.host.join('.')}/`
+                        text += `${item.request.url.path.join('/')} `
+                        text += `[${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
+                        text += ` (${failcount}/${testcount})`
+                        text += `\n`
                     }
                    
                    
