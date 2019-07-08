@@ -49,6 +49,7 @@ class SlackReporter {
             text += `*Success requests*\n`;
             let failtitle = true;
             let failtext = ''
+            let totalfail = -1
             summary.run.executions.forEach(item =>{
                 let testcount = 0;
                 let failcount = 0;
@@ -61,8 +62,9 @@ class SlackReporter {
                                 //text += `\t${assert} ${assertion.assertion}\n`
                                 if(assertion.error != null){
                                     failcount ++;
+                                    totalfail ++;
                                     isFail = true;
-                                    fail_data.push([assertion.error.index,assertion.error.name,`${assertion.error.message}\n${item.item.name}`])
+                                    fail_data.push([totalfail,assertion.error.name,assertion.error.message])
                             }
                         })
                     }
@@ -83,10 +85,10 @@ class SlackReporter {
                         //text += `:point_right: ${item.item.name}\n`
                         failtext += url
                         failtext += ` [${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
-                        failtext += ` (${failcount}/${testcount})`
+                        failtext += ` (${testcount-failcount}/${testcount})`
                         item.assertions.forEach(assertion=>{
                             if(assertion.error != null){
-                                failtext += ` #${assertion.error.index}`
+                                failtext += ` #${totalfail}`
                             }
                         })
                         failtext += `\n`
