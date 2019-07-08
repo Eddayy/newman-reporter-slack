@@ -41,14 +41,14 @@ class SlackReporter {
             arr.forEach(function (element) {
                 data.push([element, run.stats[element].total, run.stats[element].failed]);
             });
-            let fail_headers = ['#','failure','url','detail'];
+            let fail_headers = ['#','failure','detail'];
             fail_data.push(fail_headers);
 
             let text = `${title}\n`;
             let isFail = false;
             text += `*Success requests*\n`;
-            let failtitle = false;
-
+            let failtitle = true;
+            let failtext = ''
             summary.run.executions.forEach(item =>{
                 let testcount = 0;
                 let failcount = 0;
@@ -62,13 +62,12 @@ class SlackReporter {
                                 if(assertion.error != null){
                                     failcount ++;
                                     isFail = true;
-                                    failtitle = true
-                                    fail_data.push([assertion.error.index,assertion.error.name,url,assertion.error.message])
+                                    fail_data.push([assertion.error.index,assertion.error.name,`${assertion.error.message}\n${item.item.name}`])
                             }
                         })
                     }
                     if(failcount === 0){
-                        text += `:check_mark: `
+                        text += `:heavy_check_mark: `
                          //text += `:point_right: ${item.item.name}\n`
                         text += url
                         text += ` [${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
@@ -78,19 +77,25 @@ class SlackReporter {
                     else{
                         if(failtitle){
                             failtitle = false;
-                            text += `*Error requests*\n`;
+                            failtext += `*Error requests*\n`;
                         }
-                        text += `:x: `
+                        failtext += `:x: `
                         //text += `:point_right: ${item.item.name}\n`
-                        text += url
-                        text += ` [${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
-                        text += ` (${failcount}/${testcount})`
-                        text += `\n`
+                        failtext += url
+                        failtext += ` [${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
+                        failtext += ` (${failcount}/${testcount})`
+                        item.assertions.forEach(assertion=>{
+                            if(assertion.error != null){
+                                failtext += ` #${assertion.error.index}`
+                            }
+                        })
+                        failtext += `\n`
                     }
                    
                    
                 }
             })
+            text += failtext;
             let duration = prettyms(run.timings.completed - run.timings.started);
             data.push(['------------------', '-----', '-------']);
             data.push(['total run duration', duration]);
