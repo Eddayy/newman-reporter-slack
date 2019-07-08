@@ -47,12 +47,12 @@ class SlackReporter {
             let isFail = false;
             text += `*Success requests*`;
             summary.run.executions.forEach(item =>{
-                let textcount = 0;
+                let testcount = 0;
                 let failcount = 0;
                 if(item.request.url !== null || item.request.url !== undefined){
                     if(item.assertions != null){
                         item.assertions.forEach(assertion=>{
-                                textcount ++;
+                                testcount ++;
                                 //let assert = assertion.error == null?':heavy_check_mark:':':x:'
                                 //text += `\t${assert} ${assertion.assertion}\n`
                                 if(assertion.error != null){
@@ -71,6 +71,9 @@ class SlackReporter {
                         text += `[${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
                         text += `(${testcount}/${testcount})`
                         text += `\n`
+                    }
+                    else{
+                        
                     }
                    
                    
