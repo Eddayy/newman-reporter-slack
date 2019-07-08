@@ -41,7 +41,8 @@ class SlackReporter {
             arr.forEach(function (element) {
                 data.push([element, run.stats[element].total, run.stats[element].failed]);
             });
-
+            let fail_headers = ['#','failure','url','detail'];
+            fail_data.push(fail_headers);
 
             let text = `${title}\n`;
             let isFail = false;
@@ -51,6 +52,7 @@ class SlackReporter {
                 let testcount = 0;
                 let failcount = 0;
                 if(item.request.url !== null || item.request.url !== undefined){
+                    let url = `${item.request.method} ${item.request.url.protocol}://${item.request.url.host.join('.')}/${item.request.url.path.join('/')}`
                     if(item.assertions != null){
                         item.assertions.forEach(assertion=>{
                                 testcount ++;
@@ -59,16 +61,14 @@ class SlackReporter {
                                 if(assertion.error != null){
                                     failcount ++;
                                     isFail = true;
-                                    fail_data.push([assertion.error.index,assertion.error.name,assertion.error.message])
+                                    fail_data.push([assertion.error.index,assertion.error.name,url,assertion.error.message])
                             }
                         })
                     }
-                    if(isFail === false){
+                    if(failcount > 0){
                         text += `:white_check_mark: `
                          //text += `:point_right: ${item.item.name}\n`
-                        text += `${item.request.method} ${item.request.url.protocol}://`
-                        text += `${item.request.url.host.join('.')}/`
-                        text += `${item.request.url.path.join('/')} `
+                        text += url
                         text += `[${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
                         text += ` (${testcount}/${testcount})`
                         text += `\n`
@@ -80,9 +80,7 @@ class SlackReporter {
                         }
                         text += `:x: `
                         //text += `:point_right: ${item.item.name}\n`
-                        text += `${item.request.method} ${item.request.url.protocol}://`
-                        text += `${item.request.url.host.join('.')}/`
-                        text += `${item.request.url.path.join('/')} `
+                        text += url
                         text += `[${item.response.code}, ${item.response.status}, ${prettyms(item.response.responseTime)}, ${prettyBytes(item.response.responseSize)}]`
                         text += ` (${failcount}/${testcount})`
                         text += `\n`
@@ -96,10 +94,7 @@ class SlackReporter {
             data.push(['total run duration', duration]);
             let table = markdowntable(data);
             text += `${backticks}${table}${backticks}`;
-            if(isFail){
-                let fail_headers = ['#','failure','detail'];
-                fail_data.push(fail_headers);
-
+            if(run.stats['assertions'].failed > 0){
                 let fail_table = markdowntable(fail_data);
                 text += `\n${backticks}${fail_table}${backticks}`;
             }
