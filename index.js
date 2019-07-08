@@ -47,7 +47,8 @@ class SlackReporter {
             let text = `${title}\n`;
             let isFail = false;
             text += `*Success requests*\n`;
-            let failtitle = true;
+            let failtitle = false;
+
             summary.run.executions.forEach(item =>{
                 let testcount = 0;
                 let failcount = 0;
@@ -61,6 +62,7 @@ class SlackReporter {
                                 if(assertion.error != null){
                                     failcount ++;
                                     isFail = true;
+                                    failtitle = true
                                     fail_data.push([assertion.error.index,assertion.error.name,url,assertion.error.message])
                             }
                         })
